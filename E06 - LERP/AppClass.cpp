@@ -2,7 +2,7 @@
 void Application::InitVariables(void)
 {
 	//Change this to your name and email
-	m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	m_sProgrammer = "Nick Stokowski - nks4601@rit.edu";
 
 	//Set the position and target of the camera
 	m_pCameraMngr->SetPositionTargetAndUp(vector3(5.0f,3.0f,15.0f), ZERO_V3, AXIS_Y);
@@ -38,6 +38,17 @@ void Application::Update(void)
 	//Is the first person camera active?
 	CameraRotation();
 }
+
+bool matching(vector3 first, vector3 second) {
+	float epsilon = 0.00001;
+	if ((abs(first.x - second.x) < epsilon) && (abs(first.y - second.y) < epsilon) && (abs(first.z - second.z) < epsilon)) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 void Application::Display(void)
 {
 	// Clear the screen
@@ -52,14 +63,25 @@ void Application::Display(void)
 	fTimer += m_pSystem->GetDeltaTime(uClock); //get the delta time for that timer
 
 	//calculate the current position
-	vector3 v3CurrentPos;
+	static vector3 v3CurrentPos = m_stopsList.at(0);
 	
 
 
 
 
 	//your code goes here
-	v3CurrentPos = vector3(0.0f, 0.0f, 0.0f);
+	//v3CurrentPos = vector3(0.0f, 0.0f, 0.0f);
+
+	static int nextStop = 0;
+	static float fPercentage = 0.0f;
+	vector3 v3NextStop = m_stopsList.at(nextStop);
+	v3CurrentPos = glm::lerp(v3CurrentPos, v3NextStop, fPercentage);
+	fPercentage += 0.003f;
+	if (matching(v3CurrentPos, v3NextStop)) {
+		nextStop = (nextStop == m_stopsList.size() - 1) ? 0 : nextStop += 1;
+		fPercentage = 0.0f;
+	}
+
 	//-------------------
 	
 
