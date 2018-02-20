@@ -1,4 +1,6 @@
 #include "MyMesh.h"
+#include <cmath>
+
 void MyMesh::Init(void)
 {
 	m_bBinded = false;
@@ -149,7 +151,7 @@ void MyMesh::Render(matrix4 a_mProjection, matrix4 a_mView, matrix4 a_mModel)
 
 	glBindVertexArray(0);// Unbind VAO so it does not get in the way of other objects
 }
-void MyMesh::AddTri(vector3 a_vBottomLeft, vector3 a_vBottomRight, vector3 a_vTopLeft)
+void MyMesh::AddTri(vector3 a_vBottomLeft, vector3 a_vBottomRight, vector3 a_vtop_baseLeft)
 {
 	//C
 	//| \
@@ -157,9 +159,9 @@ void MyMesh::AddTri(vector3 a_vBottomLeft, vector3 a_vBottomRight, vector3 a_vTo
 	//This will make the triangle A->B->C 
 	AddVertexPosition(a_vBottomLeft);
 	AddVertexPosition(a_vBottomRight);
-	AddVertexPosition(a_vTopLeft);
+	AddVertexPosition(a_vtop_baseLeft);
 }
-void MyMesh::AddQuad(vector3 a_vBottomLeft, vector3 a_vBottomRight, vector3 a_vTopLeft, vector3 a_vTopRight)
+void MyMesh::AddQuad(vector3 a_vBottomLeft, vector3 a_vBottomRight, vector3 a_vtop_baseLeft, vector3 a_vtop_baseRight)
 {
 	//C--D
 	//|  |
@@ -167,11 +169,11 @@ void MyMesh::AddQuad(vector3 a_vBottomLeft, vector3 a_vBottomRight, vector3 a_vT
 	//This will make the triangle A->B->C and then the triangle C->B->D
 	AddVertexPosition(a_vBottomLeft);
 	AddVertexPosition(a_vBottomRight);
-	AddVertexPosition(a_vTopLeft);
+	AddVertexPosition(a_vtop_baseLeft);
 
-	AddVertexPosition(a_vTopLeft);
+	AddVertexPosition(a_vtop_baseLeft);
 	AddVertexPosition(a_vBottomRight);
-	AddVertexPosition(a_vTopRight);
+	AddVertexPosition(a_vtop_baseRight);
 }
 void MyMesh::GenerateCube(float a_fSize, vector3 a_v3Color)
 {
@@ -275,9 +277,30 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	vector3 bottomRight, bottomLeft, top_base, top_face;
+	float x, y, z, theta;
+
+	theta = ((2 * PI) / (float)a_nSubdivisions);
+	y = (a_fHeight / 2.0f);
+
+	x = a_fRadius * cos(theta / 2.0f);
+	z = a_fRadius * sin(theta / 2.0f);
+
+	bottomRight = vector3(x, -y, z);
+	top_base = vector3(0, -y, 0);
+	top_face = vector3(0, y, 0);
+
+	for (int i = 0; i < a_nSubdivisions; i++) {
+		bottomLeft = bottomRight;
+		x = (bottomRight.x * cos(theta)) - (bottomRight.z * sin(theta));
+		z = (bottomRight.x * sin(theta)) + (bottomRight.z * cos(theta));
+		bottomRight = vector3(x, -y, z);
+
+		//base tri
+		AddTri(top_base, bottomRight, bottomLeft);
+		//face tri
+		AddTri(bottomLeft, bottomRight, top_face);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -299,9 +322,36 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	vector3 bottomRight, bottomLeft, bottomCenter, topRight, topLeft, topCenter;
+	float x, y, z, theta;
+
+	theta = ((2 * PI) / (float)a_nSubdivisions);
+	y = (a_fHeight / 2.0f);
+
+	x = a_fRadius * cos(theta / 2.0f);
+	z = a_fRadius * sin(theta / 2.0f);
+
+	bottomRight = vector3(x, -y, z);
+	bottomCenter = vector3(0, -y, 0);
+
+	for (int i = 0; i < a_nSubdivisions; i++) {
+
+		// bottom base tri
+		bottomLeft = bottomRight;
+		x = (bottomRight.x * cos(theta)) - (bottomRight.z * sin(theta));
+		z = (bottomRight.x * sin(theta)) + (bottomRight.z * cos(theta));
+		bottomRight = vector3(x, -y, z);
+		AddTri(bottomLeft, bottomRight, bottomCenter);
+
+		// top base tri
+		topLeft = vector3(bottomLeft.x, y, bottomLeft.z);
+		topRight = vector3(bottomRight.x, y, bottomRight.z);
+		topCenter = vector3(bottomCenter.x, y, bottomCenter.z);
+		AddTri(topCenter, topRight, topLeft);
+
+		// face quad
+		AddQuad(bottomRight, bottomLeft, topRight, topLeft);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -329,9 +379,56 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	vector3 bottomRight, bottomLeft, topRight, topLeft;
+	float x, y, z, theta;
+
+	theta = ((2 * PI) / (float)a_nSubdivisions);
+	y = (a_fHeight / 2.0f);
+
+	x = a_fOuterRadius * cos(theta / 2.0f);
+	z = a_fOuterRadius * sin(theta / 2.0f);
+
+	bottomRight = vector3(x, -y, z);
+
+	x = a_fInnerRadius * cos(theta / 2.0f);
+	z = a_fInnerRadius * sin(theta / 2.0f);
+
+	topRight = vector3(x, -y, z);
+
+	for (int i = 0; i < a_nSubdivisions; i++) {
+
+		bottomLeft = bottomRight;
+		x = (bottomRight.x * cos(theta)) - (bottomRight.z * sin(theta));
+		z = (bottomRight.x * sin(theta)) + (bottomRight.z * cos(theta));
+		bottomRight = vector3(x, -y, z);
+
+		topLeft = topRight;
+		x = (topRight.x * cos(theta)) - (topRight.z * sin(theta));
+		z = (topRight.x * sin(theta)) + (topRight.z * cos(theta));
+		topRight = vector3(x, -y, z);
+
+		// bottom base quad
+		AddQuad(bottomLeft, bottomRight, topLeft, topRight);
+		
+		//top base quad
+		AddQuad(vector3(bottomRight.x, bottomRight.y + a_fHeight, bottomRight.z),
+				vector3(bottomLeft.x, bottomLeft.y + a_fHeight, bottomLeft.z),
+				vector3(topRight.x, topRight.y + a_fHeight, topRight.z),
+				vector3(topLeft.x, topLeft.y + a_fHeight, topLeft.z));
+
+		// face quad outside
+		AddQuad(bottomRight,
+				bottomLeft,
+				vector3(bottomRight.x, bottomRight.y + a_fHeight, bottomRight.z),
+				vector3(bottomLeft.x, bottomLeft.y + a_fHeight, bottomLeft.z));
+
+		// face quad inside
+		AddQuad(topLeft,
+				topRight,
+				vector3(topLeft.x, topLeft.y + a_fHeight, topLeft.z),
+				vector3(topRight.x, topRight.y + a_fHeight, topRight.z));
+
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -369,6 +466,7 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	CompleteMesh(a_v3Color);
 	CompileOpenGL3X();
 }
+
 void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Color)
 {
 	if (a_fRadius < 0.01f)
@@ -386,9 +484,54 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	vector3 bottomRight, bottomLeft, topRight, topLeft;
+	float xtheta, ztheta, xphi, zphi, rho;
+	int longs, lats;
+
+	// I tripled these just to get better spheres
+	longs = a_nSubdivisions * 3;
+	lats = a_nSubdivisions * 3;
+
+	for (int i = 0; i < lats; i++) {
+		xtheta = ((float)i / lats) * PI;
+		ztheta = ((float)(i + 1) / lats) * PI;
+
+		for (int j = 0; j < longs; j++) {
+			xphi = ((float)j / longs) * (2 * PI);
+			zphi = ((float)(j + 1) / longs) * (2 * PI);
+
+			//
+			bottomLeft = vector3((a_fRadius * sin(zphi) * cos(ztheta)), (a_fRadius * sin(zphi) * sin(ztheta)), (a_fRadius * cos(zphi)));
+			bottomRight = vector3((a_fRadius * sin(xphi) * cos(ztheta)), (a_fRadius * sin(xphi) * sin(ztheta)), (a_fRadius * cos(xphi)));
+			topLeft = vector3((a_fRadius * sin(zphi) * cos(xtheta)), (a_fRadius * sin(zphi) * sin(xtheta)), (a_fRadius * cos(zphi)));
+			topRight = vector3((a_fRadius * sin(xphi) * cos(xtheta)), (a_fRadius * sin(xphi) * sin(xtheta)), (a_fRadius * cos(xphi)));
+
+			if (i == 0) {
+				if (j < (longs / 2)) {
+					AddTri(topRight, bottomLeft, bottomRight);
+				}
+				else {
+					AddTri(bottomRight, bottomLeft, topRight);
+				}
+			}
+			else if ((i + 1) == lats) {
+				if (j < (longs / 2)) {
+					AddTri(bottomRight, topRight, topLeft);
+				}
+				else {
+					AddTri(topLeft, topRight, bottomRight);
+				}
+			}
+			else{
+				if (j < (longs / 2)) {
+					AddQuad(bottomLeft, bottomRight, topLeft, topRight);
+				}
+				else {
+					AddQuad(topRight, bottomRight, topLeft, bottomLeft);
+				}
+			}
+		}
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
