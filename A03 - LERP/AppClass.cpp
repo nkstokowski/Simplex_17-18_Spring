@@ -2,7 +2,7 @@
 void Application::InitVariables(void)
 {
 	//Change this to your name and email
-	m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	m_sProgrammer = "Nick Stokowski - nks4601@rit.edu";
 	
 	//Set the position and target of the camera
 	//(I'm at [0,0,10], looking at [0,0,0] and up is the positive Y axis)
@@ -38,6 +38,8 @@ void Application::InitVariables(void)
 		m_shapeList.push_back(m_pMeshMngr->GenerateTorus(fSize, fSize - 0.1f, 3, i, v3Color)); //generate a custom torus and add it to the meshmanager
 		fSize += 0.5f; //increment the size for the next orbit
 		uColor -= static_cast<uint>(decrements); //decrease the wavelength
+		m_currentVertex.push_back(0); // sets up the vertex the dot is currently on
+		m_vertexPercent.push_back(0.0f); // sets up the progress made by the dot
 	}
 }
 void Application::Update(void)
@@ -62,19 +64,42 @@ void Application::Display(void)
 	/*
 		The following offset will orient the orbits as in the demo, start without it to make your life easier.
 	*/
-	//m4Offset = glm::rotate(IDENTITY_M4, 90.0f, AXIS_Z);
+	m4Offset = glm::rotate(IDENTITY_M4, 90.0f, AXIS_Z);
+
+	int sides = 3;
+	float theta = 2 * PI / sides;
+	float current, next, offset = 1.0f;
+	vector3 currentVert, nextVert;
+	float x, y;
 
 	// draw a shapes
 	for (uint i = 0; i < m_uOrbits; ++i)
 	{
 		m_pMeshMngr->AddMeshToRenderList(m_shapeList[i], glm::rotate(m4Offset, 90.0f, AXIS_X));
 
+		theta = 2 * PI / sides;
+		current = (float) m_currentVertex.at(i) * theta;
+		x = offset * cos(current);
+		y = offset * sin(current);
+		currentVert = vector3(x, y, 0.0f);
+		x = offset * cos(current + theta);
+		y = offset * sin(current + theta);
+		nextVert = vector3(x, y, 0.0f);
+
 		//calculate the current position
-		vector3 v3CurrentPos = ZERO_V3;
+		vector3 v3CurrentPos = glm::lerp(currentVert, nextVert, m_vertexPercent.at(i));
+		m_vertexPercent.at(i) += 0.03;
+		if (m_vertexPercent.at(i) >= 1.0f) {
+			m_currentVertex.at(i) = (m_currentVertex.at(i) + 1) % sides;
+			m_vertexPercent.at(i) = 0.0f;
+		}
 		matrix4 m4Model = glm::translate(m4Offset, v3CurrentPos);
 
 		//draw spheres
 		m_pMeshMngr->AddSphereToRenderList(m4Model * glm::scale(vector3(0.1)), C_WHITE);
+
+		sides++;
+		offset += 0.5f;
 	}
 
 	//render list call
