@@ -179,6 +179,8 @@ private:
 	OUTPUT: ---
 	*/
 	void CameraRotation(float a_fSpeed = 0.005f);
+
+	void rotateByMouse(float xTheta, float yTheta);
 #pragma endregion
 
 #pragma region Process Events

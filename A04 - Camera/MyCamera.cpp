@@ -8,6 +8,8 @@ void Simplex::MyCamera::SetTarget(vector3 a_v3Target) { m_v3Target = a_v3Target;
 
 void Simplex::MyCamera::SetUp(vector3 a_v3Up) { m_v3Up = a_v3Up; }
 
+void Simplex::MyCamera::setRight(vector3 a_v3Right) { m_v3Right = a_v3Right; }
+
 void Simplex::MyCamera::SetPerspective(bool a_bPerspective) { m_bPerspective = a_bPerspective; }
 
 void Simplex::MyCamera::SetFOV(float a_fFOV) { m_fFOV = a_fFOV; }
@@ -23,6 +25,14 @@ void Simplex::MyCamera::SetVerticalPlanes(vector2 a_v2Vertical) { m_v2Vertical =
 matrix4 Simplex::MyCamera::GetProjectionMatrix(void) { return m_m4Projection; }
 
 matrix4 Simplex::MyCamera::GetViewMatrix(void) { CalculateViewMatrix(); return m_m4View; }
+
+vector3 Simplex::MyCamera::GetPosition(void) { return m_v3Position; }
+
+vector3 Simplex::MyCamera::GetTarget(void) { return m_v3Target; }
+
+vector3 Simplex::MyCamera::GetUp(void) { return m_v3Up; }
+
+vector3 Simplex::MyCamera::getRight(void) { return m_v3Right; }
 
 Simplex::MyCamera::MyCamera()
 {
@@ -153,4 +163,43 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 										m_v2Vertical.x, m_v2Vertical.y, //vertical
 										m_v2NearFar.x, m_v2NearFar.y); //near and far
 	}
+}
+
+void Simplex::MyCamera::moveCamera(float vertMovement, float horzMovement)
+{
+	// Update position
+	vector3 forward = m_v3Target - m_v3Position;
+	SetPosition(m_v3Position + (forward * horzMovement) + (m_v3Right * vertMovement));
+
+	// Update target
+	SetTarget(m_v3Position + forward);
+}
+
+void Simplex::MyCamera::rotateCamera(float xTheta, float yTheta)
+{
+
+	// Rotation vars needed
+	vector3 currentPos, currentDir, currentRight, newDir, newRight, newUp;
+
+	// Deal with direction
+	currentPos = GetPosition();
+	currentDir = glm::normalize(GetTarget() - currentPos);
+
+	// Deal with camera right
+	currentRight = glm::normalize(getRight());
+
+	// Get new direction and right using mouse position
+	newDir = currentDir * glm::angleAxis(-yTheta, AXIS_Y);
+	newRight = currentRight * glm::angleAxis(-yTheta, AXIS_Y);
+	newDir = newDir * glm::angleAxis(xTheta, newRight);
+
+	// Set the target, opposite of how we got direction
+	SetTarget(currentPos + newDir);
+
+	// New camera up is the negative cross of direction and right
+	newUp = -glm::cross(newDir, newRight);
+
+	//Set up and right
+	SetUp(newUp);
+	setRight(newRight);
 }

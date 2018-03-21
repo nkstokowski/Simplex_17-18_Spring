@@ -325,6 +325,7 @@ void Application::ArcBall(float a_fSensitivity)
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 								   //return qArcBall; // return the new quaternion orientation
 }
+
 void Application::CameraRotation(float a_fSpeed)
 {
 	if (m_bFPC == false)
@@ -368,9 +369,12 @@ void Application::CameraRotation(float a_fSpeed)
 		fDeltaMouse = static_cast<float>(MouseY - CenterY);
 		fAngleX += fDeltaMouse * a_fSpeed;
 	}
-	//Change the Yaw and the Pitch of the camera
+
+	m_pCamera->rotateCamera(fAngleX * 2, fAngleY * 2);
+
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 }
+
 //Keyboard
 void Application::ProcessKeyboard(void)
 {
@@ -385,6 +389,16 @@ void Application::ProcessKeyboard(void)
 
 	if (fMultiplier)
 		fSpeed *= 5.0f;
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+		m_pCamera->moveCamera(0, fSpeed);
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+		m_pCamera->moveCamera(-fSpeed, 0);
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+		m_pCamera->moveCamera(0, -fSpeed);
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+		m_pCamera->moveCamera(fSpeed, 0);
+
 #pragma endregion
 }
 //Joystick
