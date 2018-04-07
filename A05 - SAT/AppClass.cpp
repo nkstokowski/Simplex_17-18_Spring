@@ -57,8 +57,9 @@ void Application::Update(void)
 	m_pMeshMngr->Print("Colliding: ");
 	if (bColliding)
 		m_pMeshMngr->PrintLine("YES!", C_RED);
-	else
+	else {
 		m_pMeshMngr->PrintLine("no", C_YELLOW);
+	}
 }
 void Application::Display(void)
 {
