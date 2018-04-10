@@ -3,19 +3,19 @@
 #include "MyEntity.h"
 using namespace std;
 
+/*
+ Programmer: Nick Stokowski
+ Programmer: Thomas Tabacchi
+*/
+
 namespace Simplex
 {
 
 	class MyEntityManeger
 	{
 	private:
-		static MyEntityManeger* m_pInstance; // Singleton pointer
-											 //Rule of 3
-											 /*
-											 USAGE: Constructor
-											 ARGUMENTS: ---
-											 OUTPUT:
-											 */
+		int m_iEntityCount = 0; //number of elements in the list
+
 		MyEntityManeger(void);
 		/*
 		USAGE: Copy Constructor
@@ -52,6 +52,14 @@ namespace Simplex
 	public:
 		vector<MyEntity*> entities;
 
+		static MyEntityManeger* m_pInstance; // Singleton pointer
+											 //Rule of 3
+											 /*
+											 USAGE: Constructor
+											 ARGUMENTS: ---
+											 OUTPUT:
+											 */
+
 
 		//Singleton Methods
 		/*
@@ -82,6 +90,10 @@ namespace Simplex
 		// Check specific collision
 		bool CheckCollision(String a_sFirstID, String a_sSecondID);
 
+		// Check all collisions
+		void CheckAllCollisions();
+
+		// ID versions
 		Model * GetModel(String a_sUniqueID);
 
 		RigidBody * GetRigidBody(String a_sUniqueID);
@@ -92,8 +104,20 @@ namespace Simplex
 
 		void SetAxisVisibility(bool a_bVisibility, String a_sUniqueID);
 
+		void renderEntity(String a_sUniqueID, bool drawRigidBody);
 
+		// Index Versions
+		Model * GetModel(int a_iEntityIndex);
 
+		RigidBody * GetRigidBody(int a_iEntityIndex);
+
+		matrix4 GetModelMatrix(int a_iEntityIndex);
+
+		void SetModelMatrix(matrix4 a_m4ToWorld, int a_iEntityIndex);
+
+		void SetAxisVisibility(bool a_bVisibility, int a_iEntityIndex);
+
+		void renderEntity(int a_iEntityIndex, bool drawRigidBody);
 		
 
 	};
